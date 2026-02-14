@@ -1,0 +1,107 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data files (user-specific, potentially large)
+data/*.pkl
+data/*.mat
+data/*.h5
+data/*.hdf5
+data/*.npy
+data/*.npz
+!data/.gitkeep
+!data/README.md
+
+# Output files
+plots/
+plot_data/
+output/
+results/
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.svg
+*.csv
+*.html
+*.json
+
+# Large skeleton/volume files
+*_skeleton.pkl
+*_vessels.pkl
+*_skeleton_fixed.pkl
+*skeleton_20*.pkl
+*liver_skeleton.pkl
+*_liver_vessels.pkl
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+.cache/
+
+# Batch scripts (Windows-specific)
+*.bat
+
+# Model checkpoints
+*.pth
+*.pt
+*.ckpt
+
+# PyVista cache
+.pyvista/
+
+# Matplotlib cache
+.matplotlib/
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
