@@ -72,7 +72,10 @@ if __name__ == "__main__":
 **Before running**, update the file paths in `basic_example.py` to point to your data:
 ```python
 skeleton_path="../data/your_skeleton.pkl"  # Change to your skeleton file name
+volume_spacing=(16, 16, 8)  # IMPORTANT: Set correct voxel spacing!
 ```
+
+⚠️ **Important**: Set the correct `volume_spacing` (x, y, z) in microns for your data! If the skeleton and volume don't overlap when visualized, this is usually a sign that the voxel spacing is incorrect.
 
 That's it! The visualization will open in a 3D interactive window.
 
@@ -93,7 +96,9 @@ MATLAB `.mat` files with binary 3D volumes:
 - Format: MATLAB v7.2 or v7.3
 - Variable: typically `rescaled_vol`
 - Content: Binary vessel mask
-- Spacing: Known voxel dimensions
+- **Spacing**: Must specify correct voxel dimensions (x, y, z) in microns
+
+⚠️ **Voxel Spacing is Critical**: If skeleton and volume don't overlap in the visualization, the voxel spacing is likely incorrect. Double-check your imaging parameters!
 
 See [data/README.md](data/README.md) for detailed format specifications.
 
