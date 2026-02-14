@@ -24,59 +24,57 @@ where γ ≈ 3 (the "cube law") represents the optimal balance between blood vol
 
 ## Quick Start
 
-### Installation
+### 1. Install Dependencies
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/murray-bifurcation-visualization.git
+git clone https://github.com/Florin1738/murray-bifurcation-visualization.git
 cd murray-bifurcation-visualization
 
-# Install dependencies
+# Install core dependencies
 pip install -r requirements.txt
 
-# For advanced analysis features (optional)
+# Optional: Install ML analysis dependencies
 pip install -r requirements-analysis.txt
 ```
 
-### Basic Usage
+### 2. Add Your Data
 
-```python
-from murray_viz import MurrayBifurcationVisualizer
-
-# Initialize visualizer
-viz = MurrayBifurcationVisualizer(
-    skeleton_path="data/your_skeleton.pkl",
-    volume_path="data/your_volume.mat",
-    volume_var='rescaled_vol',
-    volume_spacing=(16, 16, 8)  # voxel spacing in microns
-)
-
-# Analysis pipeline
-viz.detect_bifurcations()
-viz.compute_murray_metrics(gamma=3.0)
-viz.print_bifurcation_summary()
-
-# Visualization
-viz.extract_surface()
-viz.create_skeleton_mesh()
-viz.assign_metrics_to_surface('murray_phi')
-viz.visualize(metric_name='murray_phi')
+Place your skeleton file(s) in the `data/` directory:
+```bash
+data/
+└── your_skeleton.pkl  # Required: kimimaro skeleton file
+└── your_volume.mat    # Optional: binary volume for surface rendering
 ```
 
-### Skeleton-Only Mode
+### 3. Run the Example
+
+**That's it!** Just run the example script:
+
+```bash
+cd examples
+python basic_example.py
+```
+
+The script includes several pre-configured examples. At the bottom of `basic_example.py`, **uncomment the function you want to run**:
 
 ```python
-# Visualize without volume data
-viz = MurrayBifurcationVisualizer(
-    skeleton_path="data/your_skeleton.pkl",
-    volume_path=None  # No volume required
-)
-
-viz.detect_bifurcations()
-viz.compute_murray_metrics()
-viz.create_skeleton_mesh()
-# Custom visualization code (see examples/basic_example.py)
+if __name__ == "__main__":
+    basic_example()           # ← Default: Basic Murray visualization
+    # metric_comparison()     # Compare φ, ε, and γ metrics
+    # custom_exponent()       # Test different exponents
+    # custom_configuration()  # Customize appearance
+    # export_statistics()     # Export data to CSV
+    # skeleton_only()         # Visualize without volume
+    # quick_analysis()        # Fast batch processing
 ```
+
+**Before running**, update the file paths in `basic_example.py` to point to your data:
+```python
+skeleton_path="../data/your_skeleton.pkl"  # Change to your skeleton file name
+```
+
+That's it! The visualization will open in a 3D interactive window.
 
 ## Data Requirements
 
@@ -99,63 +97,74 @@ MATLAB `.mat` files with binary 3D volumes:
 
 See [data/README.md](data/README.md) for detailed format specifications.
 
-## Documentation
+## What the Examples Include
 
-- **[Quick Start Guide](docs/QUICKSTART.md)** - Get started in 5 minutes
-- **[Visualization Guide](docs/VISUALIZATION_GUIDE.md)** - Complete usage documentation
-- **[Implementation Details](docs/IMPLEMENTATION.md)** - Technical architecture
-- **[Exponent Fitting](docs/EXPONENT_FITTING.md)** - Murray exponent calculation
-- **[Driver Analysis](docs/DRIVERS_ANALYSIS.md)** - ML-based feature importance
-- **[Data Structures](docs/KIMIMARO_STRUCTURES.md)** - Kimimaro skeleton format
+The `basic_example.py` script includes 7 different analyses:
 
-## Examples
+1. **`basic_example()`** - Simple Murray ratio visualization
+2. **`metric_comparison()`** - Compare φ, ε, and γ side-by-side
+3. **`custom_exponent()`** - Test different Murray exponents
+4. **`custom_configuration()`** - Customize colors and appearance
+5. **`export_statistics()`** - Save data to CSV for further analysis
+6. **`skeleton_only()`** - Visualize without volume data
+7. **`quick_analysis()`** - Fast batch processing without visualization
 
-See the [examples/](examples/) directory for:
-- **basic_example.py** - Complete workflow demonstration
-  - Basic visualization with default settings
-  - Metric comparison (φ, ε, γ)
-  - Custom exponent testing
-  - Configuration options
-  - Statistics export
-  - Skeleton-only visualization
+Just uncomment the one you want at the bottom of the file and run it!
 
-## Configuration
+---
 
-The visualizer is highly customizable:
+## For Advanced Users
+
+### Custom Python Scripts
+
+You can write your own analysis scripts using the package:
 
 ```python
-viz.config['bifurcation_sphere_scale'] = 2.5  # Sphere size around bifurcations
-viz.config['surface_opacity'] = 0.25           # Non-bifurcation regions
-viz.config['colored_opacity'] = 0.65           # Bifurcation regions
+from murray_viz import MurrayBifurcationVisualizer
+
+viz = MurrayBifurcationVisualizer(
+    skeleton_path="data/your_skeleton.pkl",
+    volume_path="data/your_volume.mat",  # Optional
+    volume_var='rescaled_vol',
+    volume_spacing=(16, 16, 8)
+)
+
+viz.detect_bifurcations()
+viz.compute_murray_metrics(gamma=3.0)
+viz.visualize(metric_name='murray_phi')
+```
+
+### Customization Options
+
+```python
+# Customize visualization appearance
+viz.config['bifurcation_sphere_scale'] = 2.5  # Sphere size
+viz.config['surface_opacity'] = 0.25           # Transparency
 viz.config['colormap'] = 'coolwarm'            # Color scheme
-viz.config['skeleton_color'] = 'black'         # Skeleton rendering
-viz.config['window_size'] = (1400, 900)        # Window dimensions
+viz.config['window_size'] = (1400, 900)        # Window size
 ```
 
-## Dependencies
+### Detailed Documentation
 
-### Core Requirements
+For in-depth technical details, see the [docs/](docs/) directory:
+- **[Visualization Guide](docs/VISUALIZATION_GUIDE.md)** - Complete API documentation
+- **[Implementation Details](docs/IMPLEMENTATION.md)** - Technical architecture
+- **[Exponent Fitting](docs/EXPONENT_FITTING.md)** - Murray exponent calculation
+- **[Data Structures](docs/KIMIMARO_STRUCTURES.md)** - Skeleton file format
 
-```
-Python >= 3.9
-pyvista >= 0.40.0
-numpy >= 1.20.0
-scipy >= 1.7.0
-scikit-image >= 0.19.0
-h5py >= 3.0.0
-vtk >= 9.0.0
-PyQt5 >= 5.15.0
-PyOpenGL >= 3.1.0
-```
+## Requirements
 
-### Analysis Requirements (Optional)
+**Python 3.9+** and the packages in `requirements.txt` (installed automatically with `pip install -r requirements.txt`)
 
-```
-scikit-learn >= 1.0.0
-pandas >= 1.3.0
-matplotlib >= 3.5.0
-torch >= 1.10.0
-```
+Main packages:
+- **PyVista** - 3D visualization
+- **NumPy/SciPy** - Scientific computing
+- **scikit-image** - Image processing
+
+Optional (for ML analysis):
+- **scikit-learn** - Machine learning
+- **pandas** - Data analysis
+- **PyTorch** - Deep learning
 
 ## Citation
 
