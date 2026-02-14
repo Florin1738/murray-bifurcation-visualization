@@ -36,7 +36,6 @@ pip install -r requirements.txt
 
 # For advanced analysis features (optional)
 pip install -r requirements-analysis.txt
-pip install git+https://github.com/gcskoenig/fippy.git
 ```
 
 ### Basic Usage
@@ -156,7 +155,6 @@ scikit-learn >= 1.0.0
 pandas >= 1.3.0
 matplotlib >= 3.5.0
 torch >= 1.10.0
-fippy (install via: pip install git+https://github.com/gcskoenig/fippy.git)
 ```
 
 ## Citation
@@ -185,7 +183,6 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 - **Kimimaro**: Skeleton extraction library
 - **PyVista**: 3D visualization framework
-- **fippy**: Conditional feature importance analysis
 
 ## Project Structure
 

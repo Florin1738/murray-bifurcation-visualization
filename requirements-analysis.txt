@@ -8,8 +8,3 @@ matplotlib>=3.5.0,<4.0.0
 
 # Deep learning (optional, for advanced analysis)
 torch>=1.10.0,<3.0.0
-
-# Advanced conditional feature importance
-# Note: fippy must be installed separately:
-#   pip install git+https://github.com/gcskoenig/fippy.git
-# The analysis module will gracefully skip CFI plots if fippy is not available.
