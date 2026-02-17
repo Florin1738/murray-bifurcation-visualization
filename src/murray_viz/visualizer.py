@@ -932,14 +932,15 @@ class MurrayBifurcationVisualizer:
 
 def main():
     """Main execution function."""
+    from .config import get_dataset_config
+
     print("Murray's Law Bifurcation Visualizer")
     print("="*60)
 
-    # Configuration - UPDATE THESE PATHS
-    skeleton_path = "GS55_skeleton2.pkl"
-    volume_path = r"\\10.162.80.11\Andre_kit\data\monkey_fetus\bissected_monkey_GS55\10x_python\registeredE\int_2\5x_downsampled_images\classification_MODEL1_5x_GS40_GS55_06_10_2025_45_big_tiles_inceptionresnetv2\volume\Processed_Volumes\02_brain_smooth_4xy.mat"
-    volume_var = 'rescaled_vol'
-    volume_spacing = (16, 16, 16)  # Physical spacing in same units as skeleton
+    # Load configuration from centralized config
+    # To use a different dataset, pass dataset_name to get_dataset_config()
+    # e.g., config = get_dataset_config('GS40_liver')
+    config = get_dataset_config()  # Uses DEFAULT_DATASET
 
     # Default metric and gamma
     metric = 'murray_phi'
@@ -949,10 +950,10 @@ def main():
         # Create visualizer
         print(f"\nInitializing visualizer...")
         viz = MurrayBifurcationVisualizer(
-            skeleton_path=skeleton_path,
-            volume_path=volume_path,
-            volume_var=volume_var,
-            volume_spacing=volume_spacing
+            skeleton_path=config['skeleton_path'],
+            volume_path=config['volume_path'],
+            volume_var=config['volume_var'],
+            volume_spacing=config['volume_spacing']
         )
 
         # Detect bifurcations

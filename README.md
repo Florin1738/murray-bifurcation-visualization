@@ -69,10 +69,17 @@ if __name__ == "__main__":
     # quick_analysis()        # Fast batch processing
 ```
 
-**Before running**, update the file paths in `basic_example.py` to point to your data:
+**Before running**, update the centralized configuration file `src/murray_viz/config.py`:
 ```python
-skeleton_path="../data/your_skeleton.pkl"  # Change to your skeleton file name
-volume_spacing=(16, 16, 8)  # IMPORTANT: Set correct voxel spacing!
+# In config.py, add your dataset:
+DATASETS = {
+    'your_data': {
+        'skeleton_path': 'path/to/your_skeleton.pkl',
+        'volume_path': 'path/to/your_volume.mat',  # or None
+        'volume_var': 'rescaled_vol',
+        'volume_spacing': (16, 16, 8)  # IMPORTANT: Set correct voxel spacing!
+    }
+}
 ```
 
 ⚠️ **Important**: Set the correct `volume_spacing` (x, y, z) in microns for your data! If the skeleton and volume don't overlap when visualized, this is usually a sign that the voxel spacing is incorrect.
@@ -125,8 +132,18 @@ Just uncomment the one you want at the bottom of the file and run it!
 You can write your own analysis scripts using the package:
 
 ```python
-from murray_viz import MurrayBifurcationVisualizer
+from murray_viz import MurrayBifurcationVisualizer, get_dataset_config
 
+# Option 1: Use centralized configuration
+config = get_dataset_config('your_data')
+viz = MurrayBifurcationVisualizer(
+    skeleton_path=config['skeleton_path'],
+    volume_path=config['volume_path'],
+    volume_var=config['volume_var'],
+    volume_spacing=config['volume_spacing']
+)
+
+# Option 2: Direct paths (for one-off scripts)
 viz = MurrayBifurcationVisualizer(
     skeleton_path="data/your_skeleton.pkl",
     volume_path="data/your_volume.mat",  # Optional

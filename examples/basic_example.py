@@ -13,9 +13,9 @@ Uncomment different sections to try various features.
 
 SETUP INSTRUCTIONS:
 1. Place your skeleton (.pkl) files in the ../data/ directory
-2. Update skeleton_path to point to your data file
-3. If you have volume (.mat) files, place them in ../data/ and update volume_path
-4. For skeleton-only visualization, set volume_path=None
+2. Update file paths in src/murray_viz/config.py (centralized configuration)
+3. Each example function uses get_dataset_config() to load paths
+4. Available datasets: chicken_liver, GS40_liver, GS55_brain, GS55_skeleton_only
 """
 
 import sys
@@ -24,7 +24,7 @@ from pathlib import Path
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from murray_viz import MurrayBifurcationVisualizer
+from murray_viz import MurrayBifurcationVisualizer, get_dataset_config
 import numpy as np
 
 
@@ -34,19 +34,15 @@ def basic_example():
     print("BASIC EXAMPLE: Murray Ratio (φ) with Cube Law (γ=3)")
     print("="*60)
 
+    # Load configuration from centralized config
+    config = get_dataset_config('chicken_liver')
+
     # Create visualizer
-    # NOTE: Update these paths to point to your data files in ../data/
     viz = MurrayBifurcationVisualizer(
-        # Example with relative paths to data directory:
-        skeleton_path="../data/chicken_liver_skeleton.pkl",
-
-        # Option 1: Use volume file (requires .mat file in data directory)
-        # volume_path="../data/your_volume.mat",
-        # volume_var='rescaled_vol',
-        # volume_spacing=(4, 4, 8)
-
-        # Option 2: Skeleton-only mode (no volume required)
-        volume_path=None  # Set to None for skeleton-only visualization
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path'],
+        volume_var=config['volume_var'],
+        volume_spacing=config['volume_spacing']
     )
 
     # Customize visualization settings for better visibility
@@ -70,11 +66,14 @@ def metric_comparison():
     print("METRIC COMPARISON: φ, ε, and γ")
     print("="*60)
 
+    # Load configuration from centralized config
+    config = get_dataset_config('GS40_liver')
+
     viz = MurrayBifurcationVisualizer(
-        skeleton_path="../data/GS40_liver_skeleton.pkl",
-        volume_path=r"\\10.162.80.16\Andre_expansion\students\Marco\data\FINAL_VOLS\GS40S1\whole_species\liver_blood_vessels\downsampled\GS40_liver_vesels_4xy.mat",
-        volume_var='rescaled_vol',
-        volume_spacing=(16, 16, 8)
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path'],
+        volume_var=config['volume_var'],
+        volume_spacing=config['volume_spacing']
     )
 
     viz.detect_bifurcations()
@@ -100,11 +99,14 @@ def custom_exponent():
     print("CUSTOM EXPONENT: Compare γ=2.5 vs γ=3.0")
     print("="*60)
 
+    # Load configuration from centralized config
+    config = get_dataset_config('GS40_liver')
+
     viz = MurrayBifurcationVisualizer(
-        skeleton_path="../data/GS40_liver_skeleton.pkl",
-        volume_path=r"\\10.162.80.16\Andre_expansion\students\Marco\data\FINAL_VOLS\GS40S1\whole_species\liver_blood_vessels\downsampled\GS40_liver_vesels_4xy.mat",
-        volume_var='rescaled_vol',
-        volume_spacing=(16, 16, 8)
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path'],
+        volume_var=config['volume_var'],
+        volume_spacing=config['volume_spacing']
     )
 
     viz.detect_bifurcations()
@@ -137,11 +139,14 @@ def custom_configuration():
     print("CUSTOM CONFIGURATION")
     print("="*60)
 
+    # Load configuration from centralized config
+    config = get_dataset_config('GS40_liver')
+
     viz = MurrayBifurcationVisualizer(
-        skeleton_path="../data/GS40_liver_skeleton.pkl",
-        volume_path=r"\\10.162.80.16\Andre_expansion\students\Marco\data\FINAL_VOLS\GS40S1\whole_species\liver_blood_vessels\downsampled\GS40_liver_vesels_4xy.mat",
-        volume_var='rescaled_vol',
-        volume_spacing=(16, 16, 8)
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path'],
+        volume_var=config['volume_var'],
+        volume_spacing=config['volume_spacing']
     )
 
     # Customize appearance
@@ -184,11 +189,14 @@ def export_statistics():
     print("EXPORT STATISTICS")
     print("="*60)
 
+    # Load configuration from centralized config
+    config = get_dataset_config('GS40_liver')
+
     viz = MurrayBifurcationVisualizer(
-        skeleton_path="../data/GS40_liver_skeleton.pkl",
-        volume_path=r"\\10.162.80.16\Andre_expansion\students\Marco\data\FINAL_VOLS\GS40S1\whole_species\liver_blood_vessels\downsampled\GS40_liver_vesels_4xy.mat",
-        volume_var='rescaled_vol',
-        volume_spacing=(16, 16, 8)
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path'],
+        volume_var=config['volume_var'],
+        volume_spacing=config['volume_spacing']
     )
 
     viz.detect_bifurcations()
@@ -240,9 +248,12 @@ def skeleton_only():
     print("SKELETON-ONLY MODE (No Volume)")
     print("="*60)
 
+    # Load configuration from centralized config
+    config = get_dataset_config('GS55_skeleton_only')
+
     viz = MurrayBifurcationVisualizer(
-        skeleton_path="../data/GS55_skeleton2.pkl",
-        volume_path=None  # No volume
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path']
     )
 
     viz.detect_bifurcations()
@@ -300,9 +311,12 @@ def quick_analysis():
     print("QUICK ANALYSIS (No Visualization)")
     print("="*60)
 
+    # Load configuration from centralized config
+    config = get_dataset_config('GS55_skeleton_only')
+
     viz = MurrayBifurcationVisualizer(
-        skeleton_path="../data/GS55_skeleton2.pkl",
-        volume_path=None
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path']
     )
 
     viz.detect_bifurcations()

@@ -22,7 +22,8 @@ Example:
 """
 
 from .visualizer import MurrayBifurcationVisualizer
+from .config import get_dataset_config, list_datasets, DATASETS, DEFAULT_DATASET
 
 __version__ = "0.1.0"
 __author__ = "Johns Hopkins University"
-__all__ = ["MurrayBifurcationVisualizer"]
+__all__ = ["MurrayBifurcationVisualizer", "get_dataset_config", "list_datasets", "DATASETS", "DEFAULT_DATASET"]
