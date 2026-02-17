@@ -46,7 +46,7 @@ def basic_example():
     )
 
     # Customize visualization settings for better visibility
-    viz.config['colormap'] = 'coolwarm'  # Diverging colormap (blue to red via white)
+    viz.config['colormap'] = 'plasma'
 
     # Analysis pipeline
     viz.detect_bifurcations()
@@ -161,7 +161,7 @@ def custom_configuration():
     print(f"  Surface opacity: {viz.config['surface_opacity']}")
 
     # Different colormap
-    viz.config['colormap'] = 'coolwarm'
+    viz.config['colormap'] = 'plasma'
     print(f"  Colormap: {viz.config['colormap']}")
 
     # Different skeleton color
@@ -293,7 +293,7 @@ def skeleton_only():
     plotter.add_mesh(
         bif_spheres,
         scalars='murray_phi',
-        cmap='viridis',
+        cmap='plasma',
         clim=(vmin, vmax),
         opacity=0.8,
         show_scalar_bar=True,
@@ -303,6 +303,48 @@ def skeleton_only():
     plotter.camera_position = 'iso'
     plotter.show_axes()
     plotter.show()
+
+
+def visualize_murray_exponent():
+    """Visualize the best-fit Murray exponent (gamma) at each bifurcation."""
+    print("="*60)
+    print("MURRAY EXPONENT VISUALIZATION: Best-fit γ per bifurcation")
+    print("="*60)
+
+    # Load configuration from centralized config
+    config = get_dataset_config('chicken_liver')
+
+    viz = MurrayBifurcationVisualizer(
+        skeleton_path=config['skeleton_path'],
+        volume_path=config['volume_path'],
+        volume_var=config['volume_var'],
+        volume_spacing=config['volume_spacing']
+    )
+
+    # Use plasma colormap
+    viz.config['colormap'] = 'plasma'
+
+    # Analysis pipeline
+    viz.detect_bifurcations()
+    viz.compute_murray_metrics(gamma=3.0)
+    viz.print_bifurcation_summary()
+
+    # Report exponent statistics
+    gamma_vals = viz.bifurcation_metrics['murray_gamma']
+    valid_gamma = gamma_vals[~np.isnan(gamma_vals)]
+    if len(valid_gamma) > 0:
+        cube_law = np.sum(np.abs(valid_gamma - 3.0) < 0.2)
+        print(f"\nMurray Exponent (γ) Statistics:")
+        print(f"  Valid estimates: {len(valid_gamma)} / {len(gamma_vals)}")
+        print(f"  Range: {valid_gamma.min():.3f} to {valid_gamma.max():.3f}")
+        print(f"  Mean: {valid_gamma.mean():.3f}, Median: {np.median(valid_gamma):.3f}")
+        print(f"  Near cube law γ=3.0 (±0.2): {cube_law} / {len(valid_gamma)} ({100*cube_law/len(valid_gamma):.1f}%)")
+
+    # Visualization
+    viz.extract_surface()
+    viz.assign_metrics_to_surface('murray_gamma')
+    viz.create_skeleton_mesh()
+    viz.visualize(metric_name='murray_gamma')
 
 
 def quick_analysis():
@@ -355,13 +397,14 @@ if __name__ == "__main__":
     print("\nMurray Bifurcation Visualizer - Example Scripts")
     print("="*60)
     print("\nAvailable examples:")
-    print("  1. basic_example()         - Basic Murray ratio visualization")
-    print("  2. metric_comparison()     - Compare φ, ε, and γ metrics")
-    print("  3. custom_exponent()       - Test different exponents")
-    print("  4. custom_configuration()  - Customize appearance")
-    print("  5. export_statistics()     - Export data to CSV")
-    print("  6. skeleton_only()         - Visualize without volume")
-    print("  7. quick_analysis()        - Quick stats without visualization")
+    print("  1. basic_example()              - Basic Murray ratio visualization")
+    print("  2. metric_comparison()          - Compare φ, ε, and γ metrics")
+    print("  3. custom_exponent()            - Test different exponents")
+    print("  4. custom_configuration()       - Customize appearance")
+    print("  5. export_statistics()          - Export data to CSV")
+    print("  6. skeleton_only()              - Visualize without volume")
+    print("  7. visualize_murray_exponent()  - Visualize best-fit Murray exponent γ")
+    print("  8. quick_analysis()             - Quick stats without visualization")
     print("="*60)
 
     # Uncomment the example you want to run:
@@ -372,6 +415,7 @@ if __name__ == "__main__":
     # custom_configuration()
     # export_statistics()
     # skeleton_only()
+    # visualize_murray_exponent()
     # quick_analysis()
 
     # Or run the default main from the visualizer

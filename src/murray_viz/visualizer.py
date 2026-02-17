@@ -72,7 +72,7 @@ class MurrayBifurcationVisualizer:
             'skeleton_opacity': 1.0,          # Opaque skeleton
             'default_metric': 'murray_phi',   # Default: Murray ratio
             'default_gamma': 3.0,             # Default: cube law
-            'colormap': 'coolwarm',           # Color map for metrics (blue to red via white)
+            'colormap': 'plasma',              # Color map for metrics
             'background_color': 'white',      # Plotter background
             'window_size': (1400, 900),       # Window dimensions
             'kdtree_k_candidates': 16,        # KD-tree query size for surface transfer
