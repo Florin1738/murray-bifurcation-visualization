@@ -88,6 +88,7 @@ class MurrayBifurcationVisualizer:
         # Bifurcation analysis results
         self.bifurcations = []  # List of bifurcation dicts
         self.bifurcation_metrics = {}  # Metric name -> array of values
+        self.metric_outlier_masks = {}  # Metric name -> bool array (True = outlier)
 
         # Load skeleton
         self._load_skeleton()
@@ -173,6 +174,10 @@ class MurrayBifurcationVisualizer:
         bifurcation_indices = np.where(degrees == 3)[0]
         print(f"  Found {len(bifurcation_indices)} degree-3 bifurcations")
 
+        # Pre-compute median radius as a safe fallback for NaN vertex radii
+        valid_radii = self.radius_data[np.isfinite(self.radius_data)]
+        median_radius = float(np.median(valid_radii)) if len(valid_radii) > 0 else 1.0
+
         # Analyze each bifurcation
         self.bifurcations = []
 
@@ -185,6 +190,8 @@ class MurrayBifurcationVisualizer:
             # Get bifurcation position and radius for distance calculations
             bif_pos = vertices[bif_idx]
             bif_radius = self.radius_data[bif_idx]
+            if not np.isfinite(bif_radius):
+                bif_radius = median_radius
 
             # Identify which branch is the parent (thickest)
             # Use initial neighbor radii as estimate
@@ -212,10 +219,16 @@ class MurrayBifurcationVisualizer:
                     # Use the vertices that are beyond min_distance
                     verts_for_radius = branch_verts_all
                     local_radius = np.mean([self.radius_data[v] for v in verts_for_radius])
+                    if not np.isfinite(local_radius):
+                        local_radius = self.radius_data[neighbor_idx]
+                        if not np.isfinite(local_radius):
+                            local_radius = median_radius
                 else:
                     # Fallback: use neighbor vertex directly if branch too short
                     verts_for_radius = [neighbor_idx]
                     local_radius = self.radius_data[neighbor_idx]
+                    if not np.isfinite(local_radius):
+                        local_radius = median_radius
 
                 branch_radii.append(local_radius)
                 branch_vertices.append(verts_for_radius)  # Store only vertices used for calculation
@@ -371,6 +384,60 @@ class MurrayBifurcationVisualizer:
 
         return vertices_for_averaging
 
+    def _flag_outliers(self, values: np.ndarray, iqr_scale: float = 2.0) -> np.ndarray:
+        """
+        Identify outliers in a metric array using the IQR fence method.
+
+        Algorithm
+        ---------
+        1. Collect the finite (non-NaN) values of the metric.
+        2. Compute Q1 (25th percentile) and Q3 (75th percentile).
+        3. IQR = Q3 − Q1  — the spread of the middle half of the distribution.
+        4. Fences: lo = Q1 − iqr_scale × IQR
+                   hi = Q3 + iqr_scale × IQR
+           A scale of 2.0 is tighter than the classical Tukey 1.5×
+           and much tighter than the "far outlier" 3.0×, appropriate
+           here because vascular metrics have a known expected range.
+        5. Any finite value outside [lo, hi] is marked True (outlier).
+           NaN entries are never marked as outliers — they are already
+           excluded from coloring and statistics by earlier logic.
+
+        Parameters
+        ----------
+        values : np.ndarray
+            Raw metric array (may contain NaN for structurally invalid
+            bifurcations — e.g. gamma when rp <= max(r1, r2)).
+        iqr_scale : float
+            Multiplier applied to IQR when computing the fences.
+            Default 2.0 gives fences at Q1 − 2×IQR and Q3 + 2×IQR.
+
+        Returns
+        -------
+        np.ndarray of bool, shape == values.shape
+            True where the value is a finite outlier; False everywhere else
+            (including NaN positions, which are not re-classified here).
+        """
+        outlier_mask = np.zeros(len(values), dtype=bool)
+
+        finite_mask = np.isfinite(values)
+        finite_vals = values[finite_mask]
+
+        if len(finite_vals) < 4:
+            # Too few points to compute a meaningful IQR fence — flag nothing.
+            return outlier_mask
+
+        q1, q3 = np.percentile(finite_vals, [25, 75])
+        iqr = q3 - q1
+
+        lo = q1 - iqr_scale * iqr
+        hi = q3 + iqr_scale * iqr
+
+        # Mark finite values that fall outside the fences as outliers.
+        # NaN positions remain False — they are handled separately.
+        outlier_mask[finite_mask] = (finite_vals < lo) | (finite_vals > hi)
+
+        return outlier_mask
+
     def compute_murray_metrics(self, gamma: float = 3.0):
         """
         Compute Murray's Law metrics for all bifurcations.
@@ -397,9 +464,9 @@ class MurrayBifurcationVisualizer:
         murray_gamma = np.full(n_bif, np.nan)
 
         for i, bif in enumerate(self.bifurcations):
-            rp = bif['r_parent']
-            r1 = bif['r_daughter1']
-            r2 = bif['r_daughter2']
+            rp = float(bif['r_parent'])
+            r1 = float(bif['r_daughter1'])
+            r2 = float(bif['r_daughter2'])
 
             # Murray ratio φ = (r1^γ + r2^γ) / rp^γ
             phi = (r1**gamma + r2**gamma) / (rp**gamma)
@@ -413,9 +480,13 @@ class MurrayBifurcationVisualizer:
             # Only valid if rp > max(r1, r2)
             if rp > max(r1, r2):
                 try:
-                    # Define function to solve
+                    # Ratio formulation: divide through by rp^g > 0
+                    # Equivalent root, but ratios in (0,1) so no overflow at any g
+                    ratio1 = r1 / rp
+                    ratio2 = r2 / rp
+
                     def murray_equation(g):
-                        return rp**g - (r1**g + r2**g)
+                        return 1.0 - ratio1**g - ratio2**g
 
                     # Search for root in reasonable range [1.5, 5.0]
                     gamma_est = brentq(murray_equation, 1.5, 5.0)
@@ -426,23 +497,48 @@ class MurrayBifurcationVisualizer:
             else:
                 murray_gamma[i] = np.nan
 
-        # Store metrics
-        self.bifurcation_metrics = {
+        # ------------------------------------------------------------------
+        # Outlier detection — run independently on each metric.
+        #
+        # Outliers are identified via _flag_outliers() (IQR fence, 2× scale).
+        # Their metric values are set to NaN so that downstream code
+        # (surface coloring, color-scale limits, printed statistics) treats
+        # them exactly like structurally invalid bifurcations — they go gray
+        # on the surface and are absent from every summary number.
+        #
+        # The boolean mask is stored separately so that visualize() can still
+        # locate the outlier bifurcation positions (e.g. to mark them with a
+        # distinct glyph or color in the future).
+        # ------------------------------------------------------------------
+        raw_metrics = {
             'murray_phi': murray_phi,
             'murray_residual': murray_residual,
             'murray_gamma': murray_gamma,
         }
 
-        # Statistics
+        self.metric_outlier_masks = {}
+
+        for metric_name, arr in raw_metrics.items():
+            mask = self._flag_outliers(arr)          # True where outlier
+            n_out = int(mask.sum())
+            arr[mask] = np.nan                       # Suppress from all downstream use
+            self.metric_outlier_masks[metric_name] = mask
+            if n_out > 0:
+                print(f"  Outlier suppression ({metric_name}): {n_out} bifurcation(s) set to NaN")
+
+        # Store metrics (outliers already NaN-ed in place above)
+        self.bifurcation_metrics = raw_metrics
+
+        # Statistics (computed on post-outlier-removal finite values)
         print(f"  Murray ratio φ (γ={gamma}):")
-        valid_phi = murray_phi[~np.isnan(murray_phi)]
+        valid_phi = murray_phi[np.isfinite(murray_phi)]
         if len(valid_phi) > 0:
             print(f"    Range: {valid_phi.min():.3f} to {valid_phi.max():.3f}")
             print(f"    Mean: {valid_phi.mean():.3f}, Median: {np.median(valid_phi):.3f}")
             print(f"    Near 1.0 (consistent): {np.sum(np.abs(valid_phi - 1.0) < 0.1)} / {len(valid_phi)}")
 
         print(f"  Murray exponent γ:")
-        valid_gamma = murray_gamma[~np.isnan(murray_gamma)]
+        valid_gamma = murray_gamma[np.isfinite(murray_gamma)]
         if len(valid_gamma) > 0:
             print(f"    Valid estimates: {len(valid_gamma)} / {n_bif}")
             print(f"    Range: {valid_gamma.min():.3f} to {valid_gamma.max():.3f}")
@@ -556,10 +652,12 @@ class MurrayBifurcationVisualizer:
 
                 # If inside this sphere
                 if dist <= radius:
-                    # Assign metric value (use closest containing sphere)
-                    surface_scalars[i] = metric_values[bif_idx]
-                    n_assigned += 1
-                    break  # Only assign to closest containing sphere
+                    val = metric_values[bif_idx]
+                    if np.isfinite(val):
+                        surface_scalars[i] = val
+                        n_assigned += 1
+                        break  # Only assign to closest containing sphere with valid metric
+                    # NaN metric — skip and try next nearest sphere
 
         print(f"  Assigned metric to {n_assigned:,} / {n_points:,} surface points ({100*n_assigned/n_points:.1f}%)")
 
